@@ -1,7 +1,9 @@
 from __future__ import print_function, absolute_import
 import time
+import sys
 from collections import OrderedDict
-
+import logging
+logging.basicConfig(level=logging.INFO)
 import torch
 
 from .evaluation_metrics import cmc, mean_ap
@@ -21,7 +23,17 @@ def extract_features(model, data_loader, print_freq=1, metric=None):
     for i, (imgs, fnames, pids, _) in enumerate(data_loader):
         data_time.update(time.time() - end)
 
+        logging.info('calling extract_cnn_feature with: ' + str(imgs.shape))
         outputs = extract_cnn_feature(model, imgs)
+        logging.info('got output of: ' + str(outputs.shape))
+
+        #   batch size 128 from command line -b:
+        # INFO:root:calling extract_cnn_feature with: torch.Size([128, 3, 256, 128])
+        # INFO:root:got output of: torch.Size([128, 128])
+        #   batch size 64 from command line -b:
+        # INFO:root:calling extract_cnn_feature with: torch.Size([64, 3, 256, 128])
+        # INFO:root:got output of: torch.Size([64, 128])
+
         for fname, output, pid in zip(fnames, outputs, pids):
             features[fname] = output
             labels[fname] = pid
@@ -111,8 +123,11 @@ def evaluate_all(distmat, query=None, gallery=None,
 
 class Evaluator(object):
     def __init__(self, model):
+        sys.stdout.flush()
+        sys.stderr.flush()
         super(Evaluator, self).__init__()
         self.model = model
+        logging.info('&&&& CREATING EVALUATOR &&&&&')
 
     def evaluate(self, data_loader, query, gallery, metric=None):
         features, _ = extract_features(self.model, data_loader)

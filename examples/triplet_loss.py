@@ -1,7 +1,8 @@
 from __future__ import print_function, absolute_import
 import argparse
 import os.path as osp
-
+import logging
+logging.basicConfig(level=logging.INFO)
 import numpy as np
 import sys
 import torch
@@ -55,6 +56,8 @@ def get_data(name, split_id, data_dir, height, width, batch_size, num_instances,
         sampler=RandomIdentitySampler(train_set, num_instances),
         pin_memory=True, drop_last=True)
 
+    #logging.info(str(('DATASET>VAL: ', dataset.val)))
+
     val_loader = DataLoader(
         Preprocessor(dataset.val, root=dataset.images_dir,
                      transform=test_transformer),
@@ -71,6 +74,12 @@ def get_data(name, split_id, data_dir, height, width, batch_size, num_instances,
 
 
 def main(args):
+    #logging.info('hello, start')
+    #logging.debug('hello @SStart')
+    #print('hello start!@!!')
+    #logging.error('ASDASD@@@@@')
+    #exit(1)
+
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     cudnn.benchmark = True
@@ -112,10 +121,14 @@ def main(args):
     metric = DistanceMetric(algorithm=args.dist_metric)
 
     # Evaluator
+    logging.info('MAIN:CREATING EVALUATOR')
     evaluator = Evaluator(model)
+    logging.info(str(evaluator))
+    logging.info('MAIN: DONE CREATING EVALUATOR')
     if args.evaluate:
         metric.train(model, train_loader)
         print("Validation:")
+        logging.info('********** CALLING EVALUATOR **********************')
         evaluator.evaluate(val_loader, dataset.val, dataset.val, metric)
         print("Test:")
         evaluator.evaluate(test_loader, dataset.query, dataset.gallery, metric)
